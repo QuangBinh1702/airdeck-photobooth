@@ -219,6 +219,7 @@ test.describe('AirDeck Photobooth — evidence', () => {
     }
     // Add all 4 to the strip selection.
     const toggles = page.getByTestId('gallery-strip-toggle');
+    await expect(toggles).toHaveCount(4, { timeout: 10_000 });
     for (let i = 0; i < 4; i += 1) {
       await toggles.nth(i).click();
     }
