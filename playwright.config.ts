@@ -14,6 +14,11 @@ export default defineConfig({
   // Each spec spins up a live CV loop (and may fetch the MediaPipe model). Too
   // many parallel workers starve the CPU and make UI clicks flaky, so cap it.
   workers: process.env.CI ? 1 : 3,
+  // CI runners are slower and capture is async (full-res still + enhancement),
+  // so give each test generous headroom. Multi-step photo flows (4-cut strip)
+  // can legitimately take 30s+ on a single-worker CI box.
+  timeout: process.env.CI ? 90_000 : 45_000,
+  expect: { timeout: 15_000 },
   reporter: process.env.CI ? [['html', { open: 'never' }], ['list']] : 'list',
   use: {
     baseURL: 'http://localhost:4173',

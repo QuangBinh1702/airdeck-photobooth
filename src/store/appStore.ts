@@ -42,6 +42,7 @@ export interface AppState {
   engineStatus: EngineStatus;
   fps: number;
   handsDetected: number;
+  resolution: { width: number; height: number } | null;
   currentGesture: GestureId | null;
   /** The named hand sign currently held (for the photobooth shutter HUD). */
   shutterGesture: ShutterGestureId;
@@ -62,6 +63,7 @@ export interface AppState {
   setEngineStatus: (s: EngineStatus) => void;
   setFps: (fps: number) => void;
   setHandsDetected: (n: number) => void;
+  setResolution: (r: { width: number; height: number } | null) => void;
   setCurrentGesture: (g: GestureId | null) => void;
   setShutterGesture: (g: ShutterGestureId) => void;
   setFilterId: (id: string) => void;
@@ -94,6 +96,7 @@ export const useAppStore = create<AppState>((set) => ({
   engineStatus: 'idle',
   fps: 0,
   handsDetected: 0,
+  resolution: null,
   currentGesture: null,
   shutterGesture: 'none',
   filterId: 'none',
@@ -112,6 +115,7 @@ export const useAppStore = create<AppState>((set) => ({
   setEngineStatus: (engineStatus) => set({ engineStatus }),
   setFps: (fps) => set({ fps: Math.round(fps) }),
   setHandsDetected: (handsDetected) => set({ handsDetected }),
+  setResolution: (resolution) => set({ resolution }),
   setCurrentGesture: (currentGesture) => set({ currentGesture }),
   setShutterGesture: (shutterGesture) => set({ shutterGesture }),
   setFilterId: (filterId) => set({ filterId }),

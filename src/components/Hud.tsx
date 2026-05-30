@@ -12,8 +12,14 @@ function StatusDot({ ok }: { ok: boolean }) {
 }
 
 export function Hud() {
-  const { fps, handsDetected, currentGesture, cameraStatus, engineStatus } =
-    useAppStore();
+  const {
+    fps,
+    handsDetected,
+    resolution,
+    currentGesture,
+    cameraStatus,
+    engineStatus,
+  } = useAppStore();
 
   return (
     <div
@@ -49,6 +55,12 @@ export function Hud() {
           <dt className="text-white/60">Hands</dt>
           <dd data-testid="hud-hands" className="tabular-nums">
             {handsDetected}
+          </dd>
+        </div>
+        <div className="flex items-center justify-between">
+          <dt className="text-white/60">Độ phân giải</dt>
+          <dd data-testid="hud-resolution" className="tabular-nums">
+            {resolution ? `${resolution.width}×${resolution.height}` : '—'}
           </dd>
         </div>
         <div className="flex items-center justify-between">

@@ -17,10 +17,12 @@ import { FrameWindowPreview } from '@/components/FrameWindowPreview';
 import { StripMaker } from '@/components/StripMaker';
 
 export function StudioView() {
-  const { videoRef, status, error, start, stop } = useCamera();
+  const { videoRef, status, error, resolution, start, stop, grabStill } =
+    useCamera();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const setCameraStatus = useAppStore((s) => s.setCameraStatus);
+  const setResolution = useAppStore((s) => s.setResolution);
   const filterId = useAppStore((s) => s.filterId);
   const setFilterId = useAppStore((s) => s.setFilterId);
   const captureMode = useAppStore((s) => s.captureMode);
@@ -64,6 +66,10 @@ export function StudioView() {
     setCameraStatus(status);
   }, [status, setCameraStatus]);
 
+  useEffect(() => {
+    setResolution(resolution);
+  }, [resolution, setResolution]);
+
   // Clear any pending cooldown timer on unmount.
   useEffect(() => {
     return () => {
@@ -75,21 +81,41 @@ export function StudioView() {
 
   const filter = getFilterById(filterId);
 
-  // Capture the current video frame as a raw data URL (filtered + mirrored),
-  // with an optional shape overlay baked in.
+  // Capture a still as a data URL (filtered + mirrored + auto-enhanced), with an
+  // optional shape overlay. Uses the camera's full-resolution still via
+  // ImageCapture when available, falling back to the live video frame.
   const grabFrame = useCallback(
-    (overlayShape: import('@/features/photo/gestureShapes').ShapeOverlay | null) => {
+    async (
+      overlayShape: import('@/features/photo/gestureShapes').ShapeOverlay | null,
+    ): Promise<string | null> => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       if (!video || !canvas) return null;
-      return capturePhoto(
-        video,
-        canvas,
-        getFilterById(filterRef.current).css,
-        { mirror: true, overlayShape },
-      );
+
+      let bitmap: ImageBitmap | null = null;
+      try {
+        bitmap = await grabStill();
+      } catch {
+        bitmap = null;
+      }
+
+      const css = getFilterById(filterRef.current).css;
+      const url = capturePhoto(video, canvas, css, {
+        mirror: true,
+        overlayShape,
+        enhance: true,
+        ...(bitmap
+          ? {
+              source: bitmap,
+              sourceWidth: bitmap.width,
+              sourceHeight: bitmap.height,
+            }
+          : {}),
+      });
+      bitmap?.close?.();
+      return url;
     },
-    [videoRef],
+    [videoRef, grabStill],
   );
 
   const flashAndToast = useCallback(() => {
@@ -142,9 +168,9 @@ export function StudioView() {
   }, [beginCooldown]);
 
   // Single-shot capture (gesture mode, or shape mode with no active shape).
-  const captureSingle = useCallback(() => {
+  const captureSingle = useCallback(async () => {
     const mode = useAppStore.getState().captureMode;
-    const url = grabFrame(
+    const url = await grabFrame(
       mode === 'shape' ? lastFrameRef.current.shape : null,
     );
     if (url) {
@@ -157,11 +183,11 @@ export function StudioView() {
   // shape. Produces one composite image (the reference photobooth look).
   // The shape is read at the moment shot 1 is taken (end of the countdown), not
   // when the gesture was first detected, so it matches the final hand pose.
-  const captureFrameWindow = useCallback(() => {
+  const captureFrameWindow = useCallback(async () => {
     // Freeze the shape AS IT IS RIGHT NOW (countdown just finished).
     const shape = lastFrameRef.current.shape;
     // Shot 1 — background (raw, no overlay).
-    const bgUrl = grabFrame(null);
+    const bgUrl = await grabFrame(null);
     flashAndToast();
 
     if (!bgUrl || !shape) {
@@ -180,8 +206,8 @@ export function StudioView() {
 
     // Brief pause, then countdown to shot 2.
     window.setTimeout(() => {
-      runCountdown(() => {
-        const insetUrl = grabFrame(null);
+      runCountdown(async () => {
+        const insetUrl = await grabFrame(null);
         setPhaseHint(null);
         setCountdownValue(null);
         setFrameWindow(null);
@@ -231,8 +257,8 @@ export function StudioView() {
       }
 
       // Otherwise a normal single capture.
-      runCountdown(() => {
-        captureSingle();
+      runCountdown(async () => {
+        await captureSingle();
         setCountdownValue(null);
         finishAfterCapture();
       });

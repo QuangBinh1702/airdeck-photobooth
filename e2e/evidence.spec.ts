@@ -144,6 +144,7 @@ test.describe('AirDeck Photobooth — evidence', () => {
     await setTimerInstant(page);
     await startCameraReady(page);
     await page.getByTestId('capture-btn').click();
+    await expect(page.getByTestId('gallery-item')).toHaveCount(1);
     await page.getByTestId('capture-btn').click();
     await expect(page.getByTestId('gallery-item')).toHaveCount(2);
     await page.getByRole('button', { name: /Xoá tất cả/i }).click();
@@ -200,9 +201,9 @@ test.describe('AirDeck Photobooth — evidence', () => {
     // The countdown overlay should appear during the 3s window.
     await expect(page.getByTestId('countdown')).toBeVisible({ timeout: 2_000 });
     await page.screenshot({ path: shot('TC-015-countdown'), fullPage: true });
-    // And a photo is eventually captured (3s countdown + processing headroom).
+    // And a photo is eventually captured (3s countdown + still + enhance).
     await expect(page.getByTestId('gallery-item').first()).toBeVisible({
-      timeout: 10_000,
+      timeout: 15_000,
     });
   });
 
@@ -229,7 +230,7 @@ test.describe('AirDeck Photobooth — evidence', () => {
       timeout: 10_000,
     });
     await expect(page.getByTestId('strip-download')).toBeEnabled();
-    await page.screenshot({ path: shot('TC-017-strip'), fullPage: true });
+    await page.screenshot({ path: shot('TC-017-strip') });
   });
 
   test('TC-018 strip preview opens a full-size lightbox', async ({ page }) => {
