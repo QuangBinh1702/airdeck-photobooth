@@ -112,6 +112,8 @@ test.describe('Photobooth: timer, frame, select, download', () => {
 
     // Selecting the gallery item shows the framed preview + enables download.
     await page.getByTestId('gallery-item').first().click();
+    // Clicking a photo also opens its detail modal; close it to reach the panel.
+    await page.keyboard.press('Escape');
     await expect(page.getByTestId('framed-image')).toBeVisible({
       timeout: 10_000,
     });

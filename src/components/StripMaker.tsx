@@ -8,6 +8,7 @@ import { STRIP_THEMES } from '@/features/photo/stripThemes';
 import { composeStrip } from '@/features/photo/composeStrip';
 import { loadImage } from '@/features/photo/loadImage';
 import { buildFilename, downloadDataUrl } from '@/features/photo/share';
+import { Modal } from '@/components/Modal';
 
 const LAYOUTS: { id: StripLayoutId; label: string }[] = [
   { id: 'vertical-4', label: '4 dọc' },
@@ -26,6 +27,7 @@ export function StripMaker() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stripUrl, setStripUrl] = useState<string | null>(null);
   const [building, setBuilding] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const capacity = STRIP_CAPACITY[stripLayout];
 
@@ -134,12 +136,25 @@ export function StripMaker() {
       {/* Preview */}
       <div className="grid place-items-center rounded-xl bg-black/30 p-4">
         {stripUrl ? (
-          <img
-            src={stripUrl}
-            alt="Dải ảnh 4-cut"
-            className="max-h-96 rounded-md shadow-lg"
-            data-testid="strip-image"
-          />
+          <button
+            type="button"
+            onClick={() => setPreviewOpen(true)}
+            className="group relative"
+            aria-label="Phóng to xem trước dải ảnh"
+            data-testid="strip-preview-open"
+          >
+            <img
+              src={stripUrl}
+              alt="Dải ảnh 4-cut"
+              className="max-h-96 rounded-md shadow-lg transition group-hover:opacity-90"
+              data-testid="strip-image"
+            />
+            <span className="pointer-events-none absolute inset-0 grid place-items-center opacity-0 transition group-hover:opacity-100">
+              <span className="rounded-full bg-black/70 px-3 py-1.5 text-xs font-medium text-white">
+                🔍 Xem trước
+              </span>
+            </span>
+          </button>
         ) : (
           <p className="py-10 text-center text-sm text-white/40">
             {building
@@ -149,15 +164,52 @@ export function StripMaker() {
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={onDownload}
-        disabled={!stripUrl}
-        className="btn-primary mt-4 w-full"
-        data-testid="strip-download"
+      <div className="mt-4 flex gap-2">
+        <button
+          type="button"
+          onClick={() => setPreviewOpen(true)}
+          disabled={!stripUrl}
+          className="btn-ghost flex-1"
+          data-testid="strip-preview-btn"
+        >
+          🔍 Xem trước
+        </button>
+        <button
+          type="button"
+          onClick={onDownload}
+          disabled={!stripUrl}
+          className="btn-primary flex-1"
+          data-testid="strip-download"
+        >
+          ⬇ Tải dải ảnh
+        </button>
+      </div>
+
+      {/* Full-size preview modal */}
+      <Modal
+        open={previewOpen && !!stripUrl}
+        onClose={() => setPreviewOpen(false)}
+        title="Xem trước dải ảnh 4-cut"
       >
-        ⬇ Tải dải ảnh
-      </button>
+        {stripUrl && (
+          <>
+            <img
+              src={stripUrl}
+              alt="Dải ảnh 4-cut (phóng to)"
+              className="max-h-[80vh] max-w-[90vw] rounded-lg object-contain shadow-2xl"
+              data-testid="strip-preview-image"
+            />
+            <button
+              type="button"
+              onClick={onDownload}
+              className="btn-primary mt-4"
+              data-testid="strip-preview-download"
+            >
+              ⬇ Tải dải ảnh
+            </button>
+          </>
+        )}
+      </Modal>
     </section>
   );
 }

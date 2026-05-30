@@ -230,4 +230,45 @@ test.describe('AirDeck Photobooth — evidence', () => {
     await expect(page.getByTestId('strip-download')).toBeEnabled();
     await page.screenshot({ path: shot('TC-017-strip'), fullPage: true });
   });
+
+  test('TC-018 strip preview opens a full-size lightbox', async ({ page }) => {
+    await page.goto('/');
+    await setTimerInstant(page);
+    await startCameraReady(page);
+    await page.getByTestId('capture-btn').click();
+    await expect(page.getByTestId('gallery-item')).toHaveCount(1);
+    await page.getByTestId('gallery-strip-toggle').first().click();
+    await expect(page.getByTestId('strip-image')).toBeVisible({
+      timeout: 10_000,
+    });
+    // Open the preview lightbox.
+    await page.getByTestId('strip-preview-btn').click();
+    await expect(page.getByTestId('strip-preview-image')).toBeVisible();
+    await page.screenshot({ path: shot('TC-018-strip-preview'), fullPage: true });
+    // Close via the close button.
+    await page.getByTestId('modal-close').click();
+    await expect(page.getByTestId('strip-preview-image')).toHaveCount(0);
+  });
+
+  test('TC-019 framed photo opens a full-size lightbox on click', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await setTimerInstant(page);
+    await startCameraReady(page);
+    await page.getByTestId('capture-btn').click();
+    await expect(page.getByTestId('gallery-item')).toHaveCount(1);
+    // Selecting the photo renders the framed preview.
+    await page.getByTestId('gallery-item').first().click();
+    await expect(page.getByTestId('framed-image')).toBeVisible({
+      timeout: 10_000,
+    });
+    // Clicking the framed image opens the zoom lightbox.
+    await page.getByTestId('framed-preview-open').click();
+    await expect(page.getByTestId('framed-preview-image')).toBeVisible();
+    await page.screenshot({ path: shot('TC-019-framed-zoom'), fullPage: true });
+    // Close by pressing Escape.
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('framed-preview-image')).toHaveCount(0);
+  });
 });
