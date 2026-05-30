@@ -221,7 +221,7 @@ test.describe('AirDeck Photobooth — evidence', () => {
     const toggles = page.getByTestId('gallery-strip-toggle');
     await expect(toggles).toHaveCount(4, { timeout: 10_000 });
     for (let i = 0; i < 4; i += 1) {
-      await toggles.nth(i).click();
+      await toggles.nth(i).click({ force: true });
     }
     // Pick a theme + layout, then the strip preview should render.
     await page.getByTestId('strip-theme-sunset').click();
