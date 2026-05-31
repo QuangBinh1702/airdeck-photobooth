@@ -22,7 +22,7 @@ export function PhotoControls() {
 
   return (
     <div className="glass p-4">
-      <div className="flex flex-wrap items-center gap-6">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
         {/* Capture mode — the two styles are mutually exclusive (no conflict) */}
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-white/50">

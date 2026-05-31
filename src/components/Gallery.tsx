@@ -10,7 +10,7 @@ export function Gallery() {
   const toggleStripPhoto = useAppStore((s) => s.toggleStripPhoto);
 
   return (
-    <section className="glass p-4" aria-label="Gallery">
+    <section className="glass p-4" aria-label="Gallery" data-testid="gallery-section">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-white/50">
           Ảnh đã chụp ({photos.length})

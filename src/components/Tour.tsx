@@ -31,7 +31,11 @@ export function Tour() {
         ? document.querySelector<HTMLElement>(step.target)
         : null;
       let rect: Rect | null = null;
-      if (el) {
+      // Treat hidden targets (e.g. inside a collapsed mobile section, where
+      // offsetParent is null and the box is zero-sized) as "no target" so the
+      // tooltip centers instead of spotlighting a broken 0×0 box at top-left.
+      const visible = !!el && el.offsetParent !== null && el.offsetWidth > 0;
+      if (el && visible) {
         const r = el.getBoundingClientRect();
         rect = {
           top: r.top - PAD,

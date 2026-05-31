@@ -24,11 +24,17 @@ import { AccessoryPicker } from '@/components/AccessoryPicker';
 import { useFaceLoop } from '@/features/cv/useFaceLoop';
 import type { AccessoryPlacement } from '@/features/photo/accessories';
 import { StripMaker } from '@/components/StripMaker';
+import { Collapsible } from '@/components/Collapsible';
+import { GestureCheatsheet } from '@/components/GestureCheatsheet';
+import { useMediaQuery } from '@/lib/useMediaQuery';
 
 export function StudioView() {
   const { videoRef, status, error, resolution, start, stop, grabStill } =
     useCamera();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // On mobile the gesture guide is rendered inline here; on desktop it lives in
+  // the App sidebar, so we skip it here to avoid a duplicate in the DOM.
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
 
   const setCameraStatus = useAppStore((s) => s.setCameraStatus);
   const setResolution = useAppStore((s) => s.setResolution);
@@ -359,7 +365,7 @@ export function StudioView() {
   });
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       {/* Live frame: the selected frame wraps the stage so you preview the look */}
       <div
         className="rounded-2xl shadow-2xl"
@@ -469,7 +475,7 @@ export function StudioView() {
             data-testid="countdown"
             aria-live="assertive"
           >
-            <span className="text-[9rem] font-black leading-none text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)]">
+            <span className="text-[6rem] font-black leading-none text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] sm:text-[9rem]">
               {countdownValue}
             </span>
           </div>
@@ -527,40 +533,43 @@ export function StudioView() {
       </div>
 
       {/* Shutter row */}
-      <div className="flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          onClick={() => startCountdown(false)}
-          disabled={status !== 'ready'}
-          className="btn-primary text-base"
-          data-testid="capture-btn"
-        >
-          📸 Chụp ảnh
-        </button>
-        {status === 'ready' && (
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={stop}
-            className="btn-ghost"
-            data-testid="stop-camera"
+            onClick={() => startCountdown(false)}
+            disabled={status !== 'ready'}
+            className="btn-primary flex-1 py-3 text-lg sm:flex-none sm:py-2.5 sm:text-base"
+            data-testid="capture-btn"
           >
-            ⏹ Tắt camera
+            📸 Chụp ảnh
           </button>
-        )}
+          {status === 'ready' && (
+            <button
+              type="button"
+              onClick={stop}
+              className="btn-ghost shrink-0"
+              data-testid="stop-camera"
+            >
+              <span aria-hidden>⏹</span>
+              <span className="ml-1 hidden sm:inline">Tắt camera</span>
+            </button>
+          )}
+        </div>
         <span className="text-xs text-white/40">
           {captureMode === 'shape'
             ? 'Giữ hình để tự chụp (hạ tay rồi tạo lại để chụp tiếp), hoặc bấm Chụp / Space bất cứ lúc nào'
             : 'Giữ cử chỉ (✌️ 👍 🖐️) để tự chụp (hạ tay để chụp tiếp), hoặc bấm Chụp / Space'}
         </span>
 
-        <div className="ml-auto flex flex-wrap items-center gap-1.5">
+        <div className="-mx-3 flex items-center gap-1.5 overflow-x-auto px-3 pb-1 sm:mx-0 sm:ml-auto sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
           {FILTERS.map((f) => (
             <button
               key={f.id}
               type="button"
               onClick={() => setFilterId(f.id)}
               aria-pressed={filterId === f.id}
-              className={`chip ${filterId === f.id ? 'chip-on' : 'chip-off'}`}
+              className={`chip shrink-0 ${filterId === f.id ? 'chip-on' : 'chip-off'}`}
             >
               {f.label}
             </button>
@@ -568,16 +577,31 @@ export function StudioView() {
         </div>
       </div>
 
-      <PhotoControls />
+      <Collapsible title="🎛 Tùy chọn chụp" data-testid="section-controls">
+        <PhotoControls />
+      </Collapsible>
 
-      <AccessoryPicker />
+      {/* Gesture guide — mobile only (desktop shows it in the sidebar). Placed
+          near the capture controls instead of the bottom of the page. Gated by
+          the media query so only one GestureCheatsheet exists in the DOM. */}
+      {!isDesktop && (
+        <Collapsible title="🖐️ Cử chỉ & cách chụp" data-testid="section-gestures">
+          <GestureCheatsheet />
+        </Collapsible>
+      )}
+
+      <Collapsible title="🥸 Phụ kiện gắn mặt" data-testid="section-accessories">
+        <AccessoryPicker />
+      </Collapsible>
 
       <div className="grid gap-5 lg:grid-cols-[1.2fr_1fr]">
         <Gallery />
         <FramedPreview />
       </div>
 
-      <StripMaker />
+      <Collapsible title="🎞 Dải ảnh 4-cut" data-testid="section-strip">
+        <StripMaker />
+      </Collapsible>
     </div>
   );
 }

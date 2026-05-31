@@ -5,6 +5,7 @@ import { Hud } from '@/components/Hud';
 import { GestureCheatsheet } from '@/components/GestureCheatsheet';
 import { Onboarding } from '@/components/Onboarding';
 import { Tour } from '@/components/Tour';
+import { useMediaQuery } from '@/lib/useMediaQuery';
 
 // Module-level guard so the first-run auto tour fires exactly once, even under
 // React StrictMode's double-invoked effects in development.
@@ -14,6 +15,11 @@ export function App() {
   const soundEnabled = useAppStore((s) => s.soundEnabled);
   const setSoundEnabled = useAppStore((s) => s.setSoundEnabled);
   const setHelpOpen = useAppStore((s) => s.setHelpOpen);
+  const startTour = useAppStore((s) => s.startTour);
+  // Tailwind `lg` breakpoint. The Engine HUD + gesture guide live in the
+  // desktop sidebar; on mobile the HUD is dropped entirely and the gesture
+  // guide moves inline near the capture controls (rendered by StudioView).
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
 
   // First visit ever: auto-run the guided tour once, then remember it so it
   // never auto-starts again (persisted via onboardingDone in localStorage).
@@ -35,9 +41,9 @@ export function App() {
       <Onboarding />
       <Tour />
 
-      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-white/10 bg-ink/60 px-6 py-4 backdrop-blur-xl">
-        <div className="flex items-center gap-3">
-                                                            <svg className="h-9 w-9 select-none" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-white/10 bg-ink/60 px-4 py-3 backdrop-blur-xl sm:px-6 sm:py-4">
+        <div className="flex items-center gap-2 sm:gap-3">
+                                                            <svg className="h-8 w-8 shrink-0 select-none sm:h-9 sm:w-9" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <defs>
               <linearGradient id="header-brand-grad" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stop-color="#5eead4" />
@@ -98,9 +104,9 @@ export function App() {
             <path d="M 110 180 L 113 186 L 120 189 L 113 192 L 110 198 L 107 192 L 100 189 L 107 186 Z" fill="#5eead4" filter="url(#header-neon-glow)" />
             <path d="M 390 300 L 392 304 L 397 306 L 392 308 L 390 312 L 388 308 L 383 306 L 388 304 Z" fill="#a78bfa" filter="url(#header-neon-glow)" />
           </svg>
-          <h1 className="text-lg font-semibold tracking-tight">
+          <h1 className="text-base font-semibold tracking-tight sm:text-lg">
             AirDeck
-            <span className="ml-2 text-sm font-normal text-white/50">
+            <span className="ml-2 hidden text-sm font-normal text-white/50 sm:inline">
               Gesture Photobooth
             </span>
           </h1>
@@ -111,35 +117,49 @@ export function App() {
             type="button"
             onClick={() => setSoundEnabled(!soundEnabled)}
             aria-pressed={soundEnabled}
-            className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm text-white/75 transition hover:bg-white/10"
+            className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-sm text-white/75 transition hover:bg-white/10 sm:px-3"
             title={soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh'}
             data-testid="sound-toggle"
           >
-            {soundEnabled ? '🔊 Âm thanh' : '🔇 Tắt tiếng'}
+            {soundEnabled ? '🔊' : '🔇'}
+            <span className="ml-1.5 hidden sm:inline">
+              {soundEnabled ? 'Âm thanh' : 'Tắt tiếng'}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => startTour()}
+            className="hidden rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm text-white/75 transition hover:bg-white/10 sm:inline-flex sm:items-center"
+            title="Xem tour hướng dẫn"
+            data-testid="tour-btn"
+          >
+            ✨<span className="ml-1.5">Tour</span>
           </button>
           <button
             type="button"
             onClick={() => setHelpOpen(true)}
-            className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm text-white/75 transition hover:bg-white/10"
+            className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-sm text-white/75 transition hover:bg-white/10 sm:px-3"
             title="Xem hướng dẫn"
             data-testid="help-btn"
           >
-            ❔ Hướng dẫn
+            ❔<span className="ml-1.5 hidden sm:inline">Hướng dẫn</span>
           </button>
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-5 p-6 lg:flex-row">
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 p-3 sm:gap-5 sm:p-6 lg:flex-row">
         <section className="flex-1" aria-label="Camera stage">
           <StudioView />
         </section>
-        <aside className="w-full space-y-4 lg:w-80">
-          <Hud />
-          <GestureCheatsheet />
-        </aside>
+        {isDesktop && (
+          <aside className="w-full space-y-4 lg:w-80">
+            <Hud />
+            <GestureCheatsheet />
+          </aside>
+        )}
       </main>
 
-      <footer className="border-t border-white/10 px-6 py-3 text-center text-xs text-white/40">
+      <footer className="border-t border-white/10 px-4 py-3 text-center text-xs text-white/40 sm:px-6">
         100% xử lý trên thiết bị — hình ảnh camera không rời khỏi trình duyệt
         của bạn.
       </footer>

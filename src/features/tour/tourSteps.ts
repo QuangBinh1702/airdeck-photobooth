@@ -72,7 +72,7 @@ export const TOUR_STEPS: TourStep[] = [
   },
   {
     id: 'gallery',
-    target: '[data-testid="gallery"]',
+    target: '[data-testid="gallery-section"]',
     title: 'Ảnh đã chụp',
     body: 'Bấm vào ảnh để chọn (xem trước + lồng khung), hoặc nút “+ dải” để thêm vào dải 4-cut.',
     placement: 'top',
