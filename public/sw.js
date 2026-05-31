@@ -3,7 +3,7 @@
  * assets. MediaPipe WASM/model files from the CDN are cached opportunistically.
  */
 const CACHE = 'airdeck-v1';
-const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg'];
+const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest', '/airdeck-logo-v4.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

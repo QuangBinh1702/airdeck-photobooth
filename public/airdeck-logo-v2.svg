@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Dải màu Neon chuyển sắc của AirDeck -->
+    <linearGradient id="screen-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5eead4" />
+      <stop offset="100%" stop-color="#a78bfa" />
+    </linearGradient>
+    <!-- Bộ lọc phát sáng Neon -->
+    <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Nền tối tròn bo góc tinh tế phù hợp với hệ thống -->
+  <rect width="512" height="512" rx="120" fill="#0b0d12" />
+
+  <!-- Chân đế màn hình máy tính -->
+  <path d="M 236 330 L 220 390 L 292 390 L 276 330 Z" fill="#141821" stroke="url(#screen-grad)" stroke-width="3" opacity="0.8" />
+  <rect x="180" y="390" width="152" height="16" rx="8" fill="#141821" stroke="url(#screen-grad)" stroke-width="3" opacity="0.8" />
+
+  <!-- Màn hình máy tính hiển thị ứng dụng Web -->
+  <rect x="96" y="96" width="320" height="240" rx="24" fill="#141821" stroke="url(#screen-grad)" stroke-width="6" />
+  
+  <!-- Webcam nhỏ ở trên đầu màn hình (Yêu cầu thiết bị chính) -->
+  <circle cx="256" cy="80" r="12" fill="#0b0d12" stroke="#5eead4" stroke-width="3" />
+  <circle cx="256" cy="80" r="4" fill="#a78bfa" filter="url(#neon-glow)" />
+
+  <!-- Bố cục dải ảnh 4 ô (Korean 4-cut photobooth layout) hiển thị bên trong màn hình -->
+  <g opacity="0.30" stroke="url(#screen-grad)" stroke-width="2">
+    <!-- Đường chia dọc -->
+    <line x1="256" y1="96" x2="256" y2="336" />
+    <!-- Đường chia ngang -->
+    <line x1="96" y1="216" x2="416" y2="216" />
+  </g>
+
+  <!-- Biểu tượng chụp ảnh lấp lánh (Camera Flash Sparkle) ở ô chụp ảnh thứ nhất -->
+  <path d="M 176 136 L 179 143 L 186 146 L 179 149 L 176 156 L 173 149 L 166 146 L 173 143 Z" fill="#5eead4" filter="url(#neon-glow)" />
+
+  <!-- Gương mặt cười của người dùng ở ô chụp ảnh thứ hai -->
+  <circle cx="336" cy="150" r="20" fill="none" stroke="#a78bfa" stroke-width="3" opacity="0.7" />
+  <path d="M 328 145 A 2 2 0 1 1 328 144 Z" fill="#a78bfa" />
+  <path d="M 344 145 A 2 2 0 1 1 344 144 Z" fill="#a78bfa" />
+  <path d="M 326 156 Q 336 166 346 156" fill="none" stroke="#a78bfa" stroke-width="3" />
+
+  <!-- Dải ảnh thu nhỏ (Korean Photo Strip Silhouette) ở ô chụp ảnh thứ ba -->
+  <rect x="136" y="236" width="30" height="80" rx="4" fill="none" stroke="#5eead4" stroke-width="2" opacity="0.6" />
+  <line x1="136" y1="256" x2="166" y2="256" stroke="#5eead4" stroke-width="2" opacity="0.6" />
+  <line x1="136" y1="276" x2="166" y2="276" stroke="#5eead4" stroke-width="2" opacity="0.6" />
+  <line x1="136" y1="296" x2="166" y2="296" stroke="#5eead4" stroke-width="2" opacity="0.6" />
+
+  <!-- Sóng cử chỉ tương tác không chạm (Air Gesture waves) từ tay truyền tới màn hình -->
+  <path d="M 350 250 A 60 60 0 0 1 410 310" fill="none" stroke="#5eead4" stroke-width="4" stroke-linecap="round" filter="url(#neon-glow)" />
+  <path d="M 370 230 A 90 90 0 0 1 460 320" fill="none" stroke="#a78bfa" stroke-width="4" stroke-linecap="round" filter="url(#neon-glow)" opacity="0.7" />
+
+  <!-- Bàn tay cử chỉ ✌️ (Peace Sign) điều khiển ở phía trước màn hình -->
+  <g transform="translate(240, 210) scale(0.9)" fill="none" stroke="url(#screen-grad)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" filter="url(#neon-glow)">
+    <!-- Lòng bàn tay -->
+    <path d="M 90 140 C 90 100 110 90 130 90 C 150 90 160 100 160 120 L 160 140 L 90 140 Z" fill="url(#screen-grad)" fill-opacity="0.15" stroke-width="6"/>
+    <!-- Ngón trỏ chỉ lên -->
+    <path d="M 105 90 L 105 20 C 105 10 118 10 118 20 L 118 90" stroke-width="10" />
+    <!-- Ngón giữa chỉ lên -->
+    <path d="M 130 90 L 130 10 C 130 0 143 0 143 10 L 143 90" stroke-width="10" />
+    <!-- Các ngón còn lại gập -->
+    <path d="M 160 120 C 175 120 185 130 185 140" stroke-width="8" />
+    <path d="M 150 100 C 165 100 175 110 175 125" stroke-width="8" />
+    <path d="M 85 110 C 95 100 115 100 120 115" stroke-width="8" />
+  </g>
+</svg>

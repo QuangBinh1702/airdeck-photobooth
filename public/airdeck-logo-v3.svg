@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Dải màu Neon chuyển sắc của AirDeck -->
+    <linearGradient id="strip-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5eead4" />
+      <stop offset="100%" stop-color="#a78bfa" />
+    </linearGradient>
+    <!-- Bộ lọc phát sáng Neon -->
+    <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Nền tối tròn bo góc tinh tế phù hợp với hệ thống -->
+  <rect width="512" height="512" rx="120" fill="#0b0d12" />
+
+  <!-- Container của Dải ảnh 4 ô dọc (Korean 4-Cut Photo Strip Container) -->
+  <rect x="186" y="46" width="140" height="420" rx="18" fill="#141821" stroke="url(#strip-grad)" stroke-width="6" />
+
+  <!-- Khung 1: Ảnh chụp chân dung mặt cười dễ thương (Smile Portrait) -->
+  <g transform="translate(196, 56)">
+    <rect width="120" height="90" rx="8" fill="#0b0d12" opacity="0.8" />
+    <circle cx="60" cy="45" r="22" fill="none" stroke="#5eead4" stroke-width="3" />
+    <path d="M 52 40 A 1.5 1.5 0 1 1 52 39 Z" fill="#5eead4" stroke="#5eead4" stroke-width="2" />
+    <path d="M 68 40 A 1.5 1.5 0 1 1 68 39 Z" fill="#5eead4" stroke="#5eead4" stroke-width="2" />
+    <path d="M 50 50 Q 60 60 70 50" fill="none" stroke="#5eead4" stroke-width="3" stroke-linecap="round" />
+  </g>
+
+  <!-- Khung 2: Biểu tượng máy ảnh ống kính khẩu độ (Photobooth Camera) -->
+  <g transform="translate(196, 156)">
+    <rect width="120" height="90" rx="8" fill="#0b0d12" opacity="0.8" />
+    <!-- Thân máy ảnh -->
+    <rect x="30" y="25" width="60" height="40" rx="6" fill="none" stroke="#a78bfa" stroke-width="3" />
+    <path d="M 45 25 L 50 18 L 70 18 L 75 25 Z" fill="none" stroke="#a78bfa" stroke-width="3" stroke-linejoin="round" />
+    <!-- Ống kính máy ảnh -->
+    <circle cx="60" cy="45" r="14" fill="none" stroke="#a78bfa" stroke-width="3" />
+    <circle cx="60" cy="45" r="6" fill="#a78bfa" />
+    <!-- Đèn flash nhỏ -->
+    <circle cx="80" cy="33" r="3" fill="#5eead4" />
+  </g>
+
+  <!-- Khung 3: Biểu tượng tình yêu tạo dáng chụp ảnh (Heart Pose) -->
+  <g transform="translate(196, 256)">
+    <rect width="120" height="90" rx="8" fill="#0b0d12" opacity="0.8" />
+    <path d="M 60 62 C 60 62 35 45 35 32 C 35 20 45 15 52 15 C 57 15 60 20 60 20 C 60 20 63 15 68 15 C 75 15 85 20 85 32 C 85 45 60 62 60 62 Z" fill="none" stroke="#5eead4" stroke-width="4" stroke-linejoin="round" />
+    <!-- Ngôi sao nhỏ lấp lánh trang trí -->
+    <path d="M 92 25 L 94 28 L 97 28 L 95 30 L 96 33 L 93 31 L 90 33 L 91 30 L 89 28 L 92 28 Z" fill="#a78bfa" opacity="0.7" />
+  </g>
+
+  <!-- Khung 4: Biểu tượng cử chỉ bàn tay ✌️ (Subtle Hand Gesture & CV Tracking) -->
+  <g transform="translate(196, 356)">
+    <rect width="120" height="90" rx="8" fill="#0b0d12" opacity="0.8" />
+    <!-- Bàn tay cử chỉ ✌️ phát sáng nhẹ -->
+    <g transform="translate(42, 10) scale(0.65)" fill="none" stroke="url(#strip-grad)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" filter="url(#neon-glow)">
+      <!-- Lòng bàn tay -->
+      <path d="M 20 90 C 20 70 35 60 50 60 C 65 60 70 70 70 80 L 70 90 L 20 90 Z" fill="url(#strip-grad)" fill-opacity="0.2" stroke-width="4"/>
+      <!-- Ngón trỏ chỉ lên -->
+      <path d="M 30 60 L 30 10" stroke-width="8" />
+      <!-- Ngón giữa chỉ lên -->
+      <path d="M 50 60 L 50 5" stroke-width="8" />
+      <!-- Một chút điểm tracking nhỏ thể hiện tinh thần Computer Vision -->
+      <circle cx="30" cy="10" r="5" fill="#5eead4" />
+      <circle cx="50" cy="5" r="5" fill="#a78bfa" />
+      <line x1="30" y1="10" x2="50" y2="5" stroke="#ffffff" stroke-width="2" opacity="0.6" />
+    </g>
+  </g>
+
+  <!-- Các ngôi sao lấp lánh trang trí bên ngoài dải ảnh -->
+  <path d="M 120 180 L 123 186 L 130 189 L 123 192 L 120 198 L 117 192 L 110 189 L 117 186 Z" fill="#5eead4" filter="url(#neon-glow)" />
+  <path d="M 390 300 L 392 304 L 397 306 L 392 308 L 390 312 L 388 308 L 383 306 L 388 304 Z" fill="#a78bfa" filter="url(#neon-glow)" />
+</svg>
