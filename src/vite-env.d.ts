@@ -5,6 +5,7 @@ interface ImportMetaEnv {
   readonly VITE_HAND_LANDMARKER_MODEL?: string;
   readonly VITE_GESTURE_RECOGNIZER_MODEL?: string;
   readonly VITE_POSE_LANDMARKER_MODEL?: string;
+  readonly VITE_FACE_LANDMARKER_MODEL?: string;
 }
 
 interface ImportMeta {

@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import type { GestureId } from '@/types/gestures';
 import type { AppMode } from '@/features/gestures/gestureMapper';
 import type { ShutterGestureId } from '@/features/photo/shutterGesture';
+import { loadJSON, mergeStored, saveJSON } from '@/lib/persist';
+import { TOUR_STEPS } from '@/features/tour/tourSteps';
 
 export type CameraStatus =
   | 'idle'
@@ -52,10 +54,21 @@ export interface AppState {
   captureMode: CaptureMode;
   photos: CapturedPhoto[];
   selectedPhotoId: string | null;
+  /** Selected accessory ids (face stickers) to overlay + bake into photos. */
+  accessoryIds: string[];
   /** Ordered photo ids chosen for the 4-cut strip (max = strip capacity). */
   stripSelection: string[];
   stripLayout: StripLayoutId;
   stripThemeId: string;
+  /** Play shutter / countdown sounds. Persisted. */
+  soundEnabled: boolean;
+  /** Whether the first-run onboarding has been completed/dismissed. Persisted. */
+  onboardingDone: boolean;
+  /** Whether the help/onboarding modal is open (transient, not persisted). */
+  helpOpen: boolean;
+  /** Guided tour: active flag + current step index. */
+  tourActive: boolean;
+  tourStep: number;
   lastError: string | null;
 
   setMode: (mode: AppMode) => void;
@@ -70,6 +83,8 @@ export interface AppState {
   setFrameId: (id: string) => void;
   setTimer: (t: TimerSeconds) => void;
   setCaptureMode: (m: CaptureMode) => void;
+  toggleAccessory: (id: string) => void;
+  clearAccessories: () => void;
   addPhoto: (src: string) => string;
   removePhoto: (id: string) => void;
   selectPhoto: (id: string | null) => void;
@@ -79,6 +94,13 @@ export interface AppState {
   clearStripSelection: () => void;
   setStripLayout: (layout: StripLayoutId) => void;
   setStripThemeId: (id: string) => void;
+  setSoundEnabled: (on: boolean) => void;
+  setOnboardingDone: (done: boolean) => void;
+  setHelpOpen: (open: boolean) => void;
+  startTour: () => void;
+  nextTourStep: () => void;
+  prevTourStep: () => void;
+  endTour: () => void;
   setError: (msg: string | null) => void;
 }
 
@@ -87,6 +109,38 @@ export const STRIP_CAPACITY: Record<StripLayoutId, number> = {
   'vertical-4': 4,
   'grid-2x2': 4,
 };
+
+/** User settings that persist across sessions (localStorage). */
+export interface PersistedSettings {
+  filterId: string;
+  frameId: string;
+  timer: TimerSeconds;
+  captureMode: CaptureMode;
+  accessoryIds: string[];
+  stripLayout: StripLayoutId;
+  stripThemeId: string;
+  soundEnabled: boolean;
+  onboardingDone: boolean;
+}
+
+const SETTINGS_KEY = 'settings';
+
+const DEFAULT_SETTINGS: PersistedSettings = {
+  filterId: 'none',
+  frameId: 'classic-white',
+  timer: 3,
+  captureMode: 'shape',
+  accessoryIds: [],
+  stripLayout: 'vertical-4',
+  stripThemeId: 'classic-white',
+  soundEnabled: true,
+  onboardingDone: false,
+};
+
+const initialSettings = mergeStored(
+  DEFAULT_SETTINGS,
+  loadJSON<Partial<PersistedSettings>>(SETTINGS_KEY, {}),
+);
 
 let photoCounter = 0;
 
@@ -99,15 +153,21 @@ export const useAppStore = create<AppState>((set) => ({
   resolution: null,
   currentGesture: null,
   shutterGesture: 'none',
-  filterId: 'none',
-  frameId: 'classic-white',
-  timer: 3,
-  captureMode: 'shape',
+  filterId: initialSettings.filterId,
+  frameId: initialSettings.frameId,
+  timer: initialSettings.timer,
+  captureMode: initialSettings.captureMode,
   photos: [],
   selectedPhotoId: null,
+  accessoryIds: initialSettings.accessoryIds,
   stripSelection: [],
-  stripLayout: 'vertical-4',
-  stripThemeId: 'classic-white',
+  stripLayout: initialSettings.stripLayout,
+  stripThemeId: initialSettings.stripThemeId,
+  soundEnabled: initialSettings.soundEnabled,
+  onboardingDone: initialSettings.onboardingDone,
+  helpOpen: false,
+  tourActive: false,
+  tourStep: 0,
   lastError: null,
 
   setMode: (mode) => set({ mode }),
@@ -122,6 +182,13 @@ export const useAppStore = create<AppState>((set) => ({
   setFrameId: (frameId) => set({ frameId }),
   setTimer: (timer) => set({ timer }),
   setCaptureMode: (captureMode) => set({ captureMode }),
+  toggleAccessory: (id) =>
+    set((state) => ({
+      accessoryIds: state.accessoryIds.includes(id)
+        ? state.accessoryIds.filter((a) => a !== id)
+        : [...state.accessoryIds, id],
+    })),
+  clearAccessories: () => set({ accessoryIds: [] }),
   addPhoto: (src) => {
     photoCounter += 1;
     const id = `photo-${Date.now()}-${photoCounter}`;
@@ -165,5 +232,37 @@ export const useAppStore = create<AppState>((set) => ({
       ),
     })),
   setStripThemeId: (stripThemeId) => set({ stripThemeId }),
+  setSoundEnabled: (soundEnabled) => set({ soundEnabled }),
+  setOnboardingDone: (onboardingDone) => set({ onboardingDone }),
+  setHelpOpen: (helpOpen) => set({ helpOpen }),
+  startTour: () => set({ tourActive: true, tourStep: 0 }),
+  nextTourStep: () =>
+    set((state) => {
+      const last = TOUR_STEPS.length - 1;
+      if (state.tourStep >= last) return { tourActive: false, tourStep: 0 };
+      return { tourStep: state.tourStep + 1 };
+    }),
+  prevTourStep: () =>
+    set((state) => ({ tourStep: Math.max(0, state.tourStep - 1) })),
+  endTour: () => set({ tourActive: false }),
   setError: (lastError) => set({ lastError }),
 }));
+
+/**
+ * Persist the settings slice to localStorage whenever it changes. Subscribed
+ * once at module load; only the persisted keys are written.
+ */
+useAppStore.subscribe((state) => {
+  const settings: PersistedSettings = {
+    filterId: state.filterId,
+    frameId: state.frameId,
+    timer: state.timer,
+    captureMode: state.captureMode,
+    accessoryIds: state.accessoryIds,
+    stripLayout: state.stripLayout,
+    stripThemeId: state.stripThemeId,
+    soundEnabled: state.soundEnabled,
+    onboardingDone: state.onboardingDone,
+  };
+  saveJSON(SETTINGS_KEY, settings);
+});

@@ -9,11 +9,20 @@ import { loadImage } from '@/features/photo/loadImage';
 import { useGestureLoop } from '@/features/cv/useGestureLoop';
 import { Countdown } from '@/features/photo/countdown';
 import { getShutterGesture } from '@/features/photo/shutterGesture';
+import {
+  playCountdownTick,
+  playSaved,
+  playShutter,
+} from '@/features/photo/sound';
 import { PhotoControls } from '@/components/PhotoControls';
 import { Gallery } from '@/components/Gallery';
 import { FramedPreview } from '@/components/FramedPreview';
 import { OverlayCanvas, type OverlayHandle } from '@/components/OverlayCanvas';
 import { FrameWindowPreview } from '@/components/FrameWindowPreview';
+import { AccessoryCanvas, type AccessoryHandle } from '@/components/AccessoryCanvas';
+import { AccessoryPicker } from '@/components/AccessoryPicker';
+import { useFaceLoop } from '@/features/cv/useFaceLoop';
+import type { AccessoryPlacement } from '@/features/photo/accessories';
 import { StripMaker } from '@/components/StripMaker';
 
 export function StudioView() {
@@ -27,6 +36,7 @@ export function StudioView() {
   const setFilterId = useAppStore((s) => s.setFilterId);
   const captureMode = useAppStore((s) => s.captureMode);
   const shutterGesture = useAppStore((s) => s.shutterGesture);
+  const handsDetected = useAppStore((s) => s.handsDetected);
   const addPhoto = useAppStore((s) => s.addPhoto);
 
   const [countdownValue, setCountdownValue] = useState<number | null>(null);
@@ -48,6 +58,9 @@ export function StudioView() {
   filterRef.current = filterId;
   const overlayRef = useRef<OverlayHandle>(null);
   const shapeLabelRef = useRef<string | null>(null);
+  const accessoryCanvasRef = useRef<AccessoryHandle>(null);
+  // Latest accessory placements (for baking into captured photos).
+  const accessoryPlacementsRef = useRef<AccessoryPlacement[]>([]);
   // Auto-capture gate: after an auto (gesture/shape) shot, block the next auto
   // shot until the user lowers their hand AND a short cooldown elapses. This
   // stops machine-gun captures while a shape/sign is held (or flickers).
@@ -103,6 +116,7 @@ export function StudioView() {
       const url = capturePhoto(video, canvas, css, {
         mirror: true,
         overlayShape,
+        accessories: accessoryPlacementsRef.current,
         enhance: true,
         ...(bitmap
           ? {
@@ -121,6 +135,10 @@ export function StudioView() {
   const flashAndToast = useCallback(() => {
     setFlash(true);
     setJustSaved(true);
+    if (useAppStore.getState().soundEnabled) {
+      playShutter();
+      window.setTimeout(() => playSaved(), 180);
+    }
     window.setTimeout(() => setFlash(false), 220);
     window.setTimeout(() => setJustSaved(false), 1400);
   }, []);
@@ -149,9 +167,19 @@ export function StudioView() {
     const cd = new Countdown(seconds);
     countdownRef.current = cd;
     cd.start(performance.now());
+    let lastSecond = -1;
     const step = () => {
       const state = cd.tick(performance.now());
       setCountdownValue(state.running ? state.secondsLeft : null);
+      // Tick sound once per displayed second.
+      if (
+        state.running &&
+        state.secondsLeft !== lastSecond &&
+        useAppStore.getState().soundEnabled
+      ) {
+        lastSecond = state.secondsLeft;
+        playCountdownTick();
+      }
       if (state.justFinished) {
         onDone();
         return;
@@ -324,6 +352,12 @@ export function StudioView() {
   const frame = getFrameById(frameId);
   const showLiveFrame = frame.id !== 'none';
 
+  // Face accessory loop: detect faces and draw selected accessories live.
+  useFaceLoop(videoRef, status === 'ready', (placements) => {
+    accessoryPlacementsRef.current = placements;
+    accessoryCanvasRef.current?.render(placements);
+  });
+
   return (
     <div className="space-y-5">
       {/* Live frame: the selected frame wraps the stage so you preview the look */}
@@ -357,6 +391,11 @@ export function StudioView() {
           <OverlayCanvas ref={overlayRef} />
         )}
 
+        {/* Face accessory overlay (glasses, hats, ears...) */}
+        {status === 'ready' && frameWindow === null && (
+          <AccessoryCanvas ref={accessoryCanvasRef} />
+        )}
+
         {/* Frame-window live preview (2nd shot): frozen bg + live camera in shape */}
         <FrameWindowPreview
           videoRef={videoRef}
@@ -381,6 +420,20 @@ export function StudioView() {
             ✋ Hạ tay xuống để chụp tiếp
           </div>
         )}
+
+        {/* "No hand detected" hint: guides the user when nothing is tracked */}
+        {status === 'ready' &&
+          countdownValue === null &&
+          !cooling &&
+          frameWindow === null &&
+          handsDetected === 0 && (
+            <div
+              className="absolute bottom-3 left-3 z-20 max-w-[60%] rounded-full bg-black/55 px-3 py-1.5 text-xs text-white/80 backdrop-blur"
+              data-testid="no-hand-hint"
+            >
+              ✋ Đưa tay vào khung hình • đủ sáng để nhận diện tốt hơn
+            </div>
+          )}
 
         {/* Flash on capture */}
         {flash && (
@@ -485,8 +538,13 @@ export function StudioView() {
           📸 Chụp ảnh
         </button>
         {status === 'ready' && (
-          <button type="button" onClick={stop} className="btn-ghost">
-            Dừng camera
+          <button
+            type="button"
+            onClick={stop}
+            className="btn-ghost"
+            data-testid="stop-camera"
+          >
+            ⏹ Tắt camera
           </button>
         )}
         <span className="text-xs text-white/40">
@@ -511,6 +569,8 @@ export function StudioView() {
       </div>
 
       <PhotoControls />
+
+      <AccessoryPicker />
 
       <div className="grid gap-5 lg:grid-cols-[1.2fr_1fr]">
         <Gallery />

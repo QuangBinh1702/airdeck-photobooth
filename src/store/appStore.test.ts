@@ -66,6 +66,24 @@ describe('appStore — photo gallery', () => {
     useAppStore.getState().setCaptureMode('gesture');
     expect(useAppStore.getState().captureMode).toBe('gesture');
   });
+
+  it('runs the guided tour: start, next, prev, end with clamping', () => {
+    useAppStore.setState({ tourActive: false, tourStep: 0 });
+    useAppStore.getState().startTour();
+    expect(useAppStore.getState().tourActive).toBe(true);
+    expect(useAppStore.getState().tourStep).toBe(0);
+
+    useAppStore.getState().nextTourStep();
+    expect(useAppStore.getState().tourStep).toBe(1);
+    useAppStore.getState().prevTourStep();
+    expect(useAppStore.getState().tourStep).toBe(0);
+    // prev clamps at 0.
+    useAppStore.getState().prevTourStep();
+    expect(useAppStore.getState().tourStep).toBe(0);
+
+    useAppStore.getState().endTour();
+    expect(useAppStore.getState().tourActive).toBe(false);
+  });
 });
 
 describe('appStore — 4-cut strip selection', () => {

@@ -135,6 +135,20 @@ async function injectShape(
 }
 
 test.describe('Gesture shape overlay — evidence', () => {
+  // Skip the first-run onboarding modal so it doesn't block interactions.
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      try {
+        localStorage.setItem(
+          'airdeck:settings',
+          JSON.stringify({ onboardingDone: true }),
+        );
+      } catch {
+        /* ignore */
+      }
+    });
+  });
+
   test('SHAPE-01 triangle overlay renders', async ({ page }) => {
     await page.goto('/');
     await startCamera(page);

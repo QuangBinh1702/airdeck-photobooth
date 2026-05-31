@@ -19,25 +19,39 @@ async function setInstantTimer(page: Page): Promise<void> {
   await page.getByTestId('timer-0').click();
 }
 
+// Skip the first-run onboarding modal for every test in this file.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem(
+        'airdeck:settings',
+        JSON.stringify({ onboardingDone: true }),
+      );
+    } catch {
+      /* ignore */
+    }
+  });
+});
+
 test.describe('AirDeck shell', () => {
-  test('renders header, modes and on-device privacy note', async ({ page }) => {
+  test('renders header and on-device privacy note', async ({ page }) => {
     await page.goto('/');
-    await expect(
-      page.getByRole('heading', { name: /AirDeck/i }),
-    ).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Photo Studio' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /AirDeck/i })).toBeVisible();
     await expect(page.getByText(/không rời khỏi trình duyệt/i)).toBeVisible();
+    await expect(page.getByTestId('help-btn')).toBeVisible();
   });
 
-  test('switches modes and updates the gesture cheatsheet', async ({ page }) => {
+  test('toggles sound and reopens the help/onboarding modal', async ({
+    page,
+  }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Slides' }).click();
-    await expect(page.getByRole('button', { name: 'Slides' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-    // Slides mode maps a swipe -> next slide; cheatsheet should reflect mode.
-    await expect(page.getByText(/Cử chỉ · slides/i)).toBeVisible();
+    const sound = page.getByTestId('sound-toggle');
+    await expect(sound).toHaveAttribute('aria-pressed', 'true');
+    await sound.click();
+    await expect(sound).toHaveAttribute('aria-pressed', 'false');
+    // Help button reopens the onboarding modal.
+    await page.getByTestId('help-btn').click();
+    await expect(page.getByTestId('onboarding')).toBeVisible();
   });
 });
 
@@ -76,6 +90,26 @@ test.describe('Camera + capture', () => {
       .getByTestId('camera-video')
       .evaluate((el) => (el as HTMLElement).style.filter);
     expect(filterValue).toContain('grayscale');
+  });
+
+  test('stop fully turns the camera off (releases the stream)', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await page.getByTestId('start-camera').click();
+    await expect(page.getByTestId('hud-camera')).toHaveText(/ready/i, {
+      timeout: 15_000,
+    });
+    await page.getByTestId('stop-camera').click();
+    // Back to the "camera off" state: idle + the enable overlay returns.
+    await expect(page.getByTestId('hud-camera')).toHaveText(/idle/i);
+    await expect(page.getByTestId('start-camera')).toBeVisible();
+    // The stream is released (no track bound to the video element).
+    const hasTrack = await page.getByTestId('camera-video').evaluate((el) => {
+      const s = (el as HTMLVideoElement).srcObject as MediaStream | null;
+      return !!s && s.getVideoTracks().length > 0;
+    });
+    expect(hasTrack).toBe(false);
   });
 });
 

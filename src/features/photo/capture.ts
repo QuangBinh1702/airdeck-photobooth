@@ -1,12 +1,16 @@
 import { drawShape, type DrawOptions } from '@/features/photo/drawOverlay';
 import type { ShapeOverlay } from '@/features/photo/gestureShapes';
 import { enhanceImageData } from '@/features/photo/enhance';
+import { drawAccessories } from '@/features/photo/drawAccessories';
+import type { AccessoryPlacement } from '@/features/photo/accessories';
 
 export interface CaptureOptions {
   mirror?: boolean;
   type?: string;
   quality?: number;
   overlayShape?: ShapeOverlay | null;
+  /** Face accessory emoji placements to bake into the photo. */
+  accessories?: AccessoryPlacement[];
   /** Auto-enhance lighting (white balance + contrast). Default true. */
   enhance?: boolean;
   /**
@@ -37,6 +41,7 @@ export function capturePhoto(
     type = 'image/png',
     quality,
     overlayShape,
+    accessories,
     enhance = true,
     source,
     sourceWidth,
@@ -80,6 +85,11 @@ export function capturePhoto(
   if (overlayShape) {
     const opts: DrawOptions = { width: w, height: h, mirror };
     drawShape(ctx, overlayShape, opts);
+  }
+
+  // Bake face accessories on top (after enhancement so emoji colours stay true).
+  if (accessories && accessories.length > 0) {
+    drawAccessories(ctx, accessories, { width: w, height: h, mirror });
   }
 
   return canvas.toDataURL(type, quality);

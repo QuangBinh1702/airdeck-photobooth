@@ -49,25 +49,37 @@ async function captureOne(page: Page): Promise<void> {
 }
 
 test.describe('AirDeck Photobooth — evidence', () => {
+  // Skip the first-run onboarding modal so it doesn't block interactions.
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      try {
+        localStorage.setItem(
+          'airdeck:settings',
+          JSON.stringify({ onboardingDone: true }),
+        );
+      } catch {
+        /* ignore */
+      }
+    });
+  });
+
   test('TC-001 shell renders core elements', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /AirDeck/i })).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: 'Photo Studio' }),
-    ).toBeVisible();
+    await expect(page.getByTestId('help-btn')).toBeVisible();
     await expect(page.getByText(/không rời khỏi trình duyệt/i)).toBeVisible();
     await page.screenshot({ path: shot('TC-001-shell'), fullPage: true });
   });
 
-  test('TC-002 mode switch updates cheatsheet', async ({ page }) => {
+  test('TC-002 photo-mode cheatsheet reflects the capture style', async ({
+    page,
+  }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Slides' }).click();
-    await expect(page.getByRole('button', { name: 'Slides' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-    await expect(page.getByText(/Cử chỉ · slides/i)).toBeVisible();
-    await page.screenshot({ path: shot('TC-002-mode-slides'), fullPage: true });
+    // Default shape mode -> the cheatsheet shows the shape list.
+    await expect(page.getByText(/Cử chỉ · Hình học/i)).toBeVisible();
+    await page.getByTestId('mode-gesture').click();
+    await expect(page.getByText(/Cử chỉ · Cử chỉ tay/i)).toBeVisible();
+    await page.screenshot({ path: shot('TC-002-cheatsheet'), fullPage: true });
   });
 
   test('TC-003 enable camera reaches ready', async ({ page }) => {
@@ -272,5 +284,27 @@ test.describe('AirDeck Photobooth — evidence', () => {
     // Close by pressing Escape.
     await page.keyboard.press('Escape');
     await expect(page.getByTestId('framed-preview-image')).toHaveCount(0);
+  });
+
+  test('TC-021 selecting face accessories toggles them on/off', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await page.getByTestId('accessory-glasses').click();
+    await page.getByTestId('accessory-tophat').click();
+    await expect(page.getByTestId('accessory-glasses')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await expect(page.getByTestId('accessory-tophat')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await page.screenshot({ path: shot('TC-021-accessories'), fullPage: true });
+    await page.getByTestId('accessory-clear').click();
+    await expect(page.getByTestId('accessory-glasses')).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
   });
 });

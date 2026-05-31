@@ -18,7 +18,7 @@ export const STRIP_THEMES: StripTheme[] = [
     id: 'classic-white',
     label: 'Classic',
     background: '#ffffff',
-    caption: 'AirDeck · 4 cut',
+    caption: 'AirDeck',
     captionColor: '#111827',
   },
   {
