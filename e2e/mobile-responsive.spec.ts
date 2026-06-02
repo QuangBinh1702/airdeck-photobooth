@@ -49,6 +49,37 @@ async function startCameraReady(page: Page): Promise<void> {
   });
 }
 
+async function installShareProbe(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'canShare', {
+      configurable: true,
+      value: (data?: ShareData) => Boolean(data?.files?.length),
+    });
+    Object.defineProperty(navigator, 'share', {
+      configurable: true,
+      value: async (data?: ShareData) => {
+        const file = data?.files?.[0];
+        (window as unknown as { __airdeckShareProbe?: unknown }).__airdeckShareProbe = file
+          ? { name: file.name, type: file.type, size: file.size }
+          : null;
+      },
+    });
+  });
+}
+
+async function prepareFramedPhoto(page: Page): Promise<void> {
+  await page.goto('/');
+  await page.getByTestId('section-controls').click();
+  await page.getByTestId('timer-0').click();
+  await startCameraReady(page);
+  await page.getByTestId('capture-btn').click();
+  await expect(page.getByTestId('gallery-item').first()).toBeVisible();
+  await page.getByTestId('frame-mint').click();
+  await page.getByTestId('gallery-item').first().click();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('framed-image')).toBeVisible({ timeout: 10_000 });
+}
+
 test.describe('AirDeck Photobooth — mobile responsive', () => {
   // Skip the first-run onboarding modal so it doesn't block interactions.
   test.beforeEach(async ({ page }) => {
@@ -272,5 +303,72 @@ test.describe('AirDeck Photobooth — mobile responsive', () => {
     await page.getByTestId('tour-skip').click();
     await expect(page.getByTestId('tour-tooltip')).toHaveCount(0);
     await expect(page.getByTestId('timer-3')).toBeHidden();
+  });
+
+  test('MOB-009 iPhone save creates a JPEG File through Web Share', async ({
+    page,
+  }) => {
+    await installShareProbe(page);
+    await prepareFramedPhoto(page);
+
+    await page.getByTestId('download-btn').click();
+
+    const shared = await page.waitForFunction(() => {
+      return (window as unknown as { __airdeckShareProbe?: unknown }).__airdeckShareProbe;
+    });
+    const value = (await shared.jsonValue()) as {
+      name: string;
+      type: string;
+      size: number;
+    };
+    expect(value.name).toMatch(/^airdeck-\d{8}-\d{6}\.jpg$/);
+    expect(value.type).toBe('image/jpeg');
+    expect(value.size).toBeGreaterThan(0);
+
+    await page.screenshot({ path: shot('MOB-009-iphone-save-share'), fullPage: true });
+  });
+});
+
+test.describe('AirDeck Photobooth — Android mobile save evidence', () => {
+  test.use({
+    viewport: devices['Pixel 5'].viewport,
+    deviceScaleFactor: devices['Pixel 5'].deviceScaleFactor,
+    isMobile: true,
+    hasTouch: true,
+    userAgent: devices['Pixel 5'].userAgent,
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      try {
+        localStorage.setItem(
+          'airdeck:settings',
+          JSON.stringify({ onboardingDone: true }),
+        );
+      } catch {
+        /* ignore */
+      }
+    });
+  });
+
+  test('MOB-010 Android save creates a JPEG File through Web Share', async ({ page }) => {
+    await installShareProbe(page);
+    await prepareFramedPhoto(page);
+
+    await page.getByTestId('download-btn').click();
+
+    const shared = await page.waitForFunction(() => {
+      return (window as unknown as { __airdeckShareProbe?: unknown }).__airdeckShareProbe;
+    });
+    const value = (await shared.jsonValue()) as {
+      name: string;
+      type: string;
+      size: number;
+    };
+    expect(value.name).toMatch(/^airdeck-\d{8}-\d{6}\.jpg$/);
+    expect(value.type).toBe('image/jpeg');
+    expect(value.size).toBeGreaterThan(0);
+
+    await page.screenshot({ path: shot('MOB-010-android-save-share'), fullPage: true });
   });
 });

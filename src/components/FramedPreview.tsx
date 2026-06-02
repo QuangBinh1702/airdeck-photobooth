@@ -4,7 +4,7 @@ import { composeFramedPhoto } from '@/features/photo/composeFrame';
 import { loadImage } from '@/features/photo/loadImage';
 import {
   buildFilename,
-  downloadDataUrl,
+  saveCanvasImage,
   sharePhoto,
 } from '@/features/photo/share';
 import { Modal } from '@/components/Modal';
@@ -17,6 +17,7 @@ export function FramedPreview() {
   const [framedUrl, setFramedUrl] = useState<string | null>(null);
   const [canShare, setCanShare] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const selected = photos.find((p) => p.id === selectedPhotoId) ?? null;
 
@@ -45,12 +46,35 @@ export function FramedPreview() {
     };
   }, [selected, frameId]);
 
-  const onDownload = () => {
-    if (framedUrl) downloadDataUrl(framedUrl, buildFilename('airdeck', 'png'));
+  const onDownload = async () => {
+    if (saving) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    setSaving(true);
+    try {
+      await saveCanvasImage(canvas, {
+        filename: buildFilename('airdeck', 'jpg'),
+        type: 'image/jpeg',
+        quality: 0.92,
+        title: 'AirDeck photo',
+      });
+    } catch {
+      // no-op: avoid unhandled rejections from save failures
+    } finally {
+      setSaving(false);
+    }
   };
 
   const onShare = async () => {
-    if (framedUrl) await sharePhoto(framedUrl);
+    if (saving || !framedUrl) return;
+    setSaving(true);
+    try {
+      await sharePhoto(framedUrl);
+    } catch {
+      // no-op: avoid unhandled rejections from share failures
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -93,7 +117,7 @@ export function FramedPreview() {
         <button
           type="button"
           onClick={onDownload}
-          disabled={!framedUrl}
+          disabled={!framedUrl || saving}
           className="btn-primary flex-1"
           data-testid="download-btn"
         >
@@ -103,7 +127,7 @@ export function FramedPreview() {
           <button
             type="button"
             onClick={onShare}
-            disabled={!framedUrl}
+            disabled={!framedUrl || saving}
             className="btn-ghost"
             data-testid="share-btn"
           >
@@ -130,6 +154,7 @@ export function FramedPreview() {
               <button
                 type="button"
                 onClick={onDownload}
+                disabled={saving}
                 className="btn-primary"
                 data-testid="framed-preview-download"
               >
@@ -139,6 +164,7 @@ export function FramedPreview() {
                 <button
                   type="button"
                   onClick={onShare}
+                  disabled={saving}
                   className="btn-ghost"
                   data-testid="framed-preview-share"
                 >

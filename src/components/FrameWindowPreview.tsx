@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { loadImage } from '@/features/photo/loadImage';
 import { buildShapeClipPath } from '@/features/photo/composeShapeShot';
+import { drawImageCover } from '@/features/photo/drawCover';
 import type { ShapeOverlay } from '@/features/photo/gestureShapes';
 
 interface Props {
@@ -58,8 +59,10 @@ export function FrameWindowPreview({
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.clearRect(0, 0, w, h);
-          // Background: the frozen first shot (already mirrored).
-          if (bg) ctx.drawImage(bg, 0, 0, w, h);
+          // Background: the frozen first shot (already mirrored). Draw with
+          // object-fit: cover semantics so phone/tablet preview containers do
+          // not stretch the captured image when their aspect ratio differs.
+          if (bg) drawImageCover(ctx, bg, w, h);
           else {
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, w, h);
@@ -71,7 +74,7 @@ export function FrameWindowPreview({
             ctx.clip();
             ctx.translate(w, 0);
             ctx.scale(-1, 1);
-            ctx.drawImage(video, 0, 0, w, h);
+            drawImageCover(ctx, video, w, h);
             ctx.restore();
           }
           // Glowing outline so the window edge is obvious.

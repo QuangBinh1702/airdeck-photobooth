@@ -7,7 +7,7 @@ import {
 import { STRIP_THEMES } from '@/features/photo/stripThemes';
 import { composeStrip } from '@/features/photo/composeStrip';
 import { loadImage } from '@/features/photo/loadImage';
-import { buildFilename, downloadDataUrl } from '@/features/photo/share';
+import { buildFilename, saveCanvasImage } from '@/features/photo/share';
 import { Modal } from '@/components/Modal';
 
 const LAYOUTS: { id: StripLayoutId; label: string }[] = [
@@ -28,6 +28,7 @@ export function StripMaker() {
   const [stripUrl, setStripUrl] = useState<string | null>(null);
   const [building, setBuilding] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const capacity = STRIP_CAPACITY[stripLayout];
 
@@ -66,8 +67,23 @@ export function StripMaker() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stripSelection.join(','), stripLayout, stripThemeId]);
 
-  const onDownload = () => {
-    if (stripUrl) downloadDataUrl(stripUrl, buildFilename('airdeck-strip', 'png'));
+  const onDownload = async () => {
+    if (saving) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    setSaving(true);
+    try {
+      await saveCanvasImage(canvas, {
+        filename: buildFilename('airdeck-strip', 'jpg'),
+        type: 'image/jpeg',
+        quality: 0.92,
+        title: 'AirDeck photo strip',
+      });
+    } catch {
+      // no-op: avoid unhandled rejections from save failures
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -168,7 +184,7 @@ export function StripMaker() {
         <button
           type="button"
           onClick={() => setPreviewOpen(true)}
-          disabled={!stripUrl}
+          disabled={!stripUrl || saving}
           className="btn-ghost flex-1"
           data-testid="strip-preview-btn"
         >
@@ -177,7 +193,7 @@ export function StripMaker() {
         <button
           type="button"
           onClick={onDownload}
-          disabled={!stripUrl}
+          disabled={!stripUrl || saving}
           className="btn-primary flex-1"
           data-testid="strip-download"
         >
@@ -202,6 +218,7 @@ export function StripMaker() {
             <button
               type="button"
               onClick={onDownload}
+              disabled={saving}
               className="btn-primary mt-4"
               data-testid="strip-preview-download"
             >
