@@ -72,12 +72,14 @@ test.describe('Tour & help (manual launch)', () => {
     });
   });
 
-  test('TC-024 guided tour launches from the header and navigates', async ({
+  test('TC-024 guided tour launches from help and navigates', async ({
     page,
   }) => {
     await page.goto('/');
     await expect(page.getByTestId('tour-tooltip')).toHaveCount(0);
-    await page.getByTestId('tour-btn').click();
+    await page.getByTestId('help-btn').click();
+    await expect(page.getByTestId('onboarding')).toBeVisible();
+    await page.getByTestId('onboarding-tour').click();
     await expect(page.getByTestId('tour-tooltip')).toBeVisible();
     await expect(page.getByTestId('tour-image')).toBeVisible();
     await page.screenshot({ path: shot('TC-024-tour'), fullPage: true });

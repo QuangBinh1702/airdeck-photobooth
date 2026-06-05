@@ -15,7 +15,6 @@ export function App() {
   const soundEnabled = useAppStore((s) => s.soundEnabled);
   const setSoundEnabled = useAppStore((s) => s.setSoundEnabled);
   const setHelpOpen = useAppStore((s) => s.setHelpOpen);
-  const startTour = useAppStore((s) => s.startTour);
   // Tailwind `lg` breakpoint. The Engine HUD + gesture guide live in the
   // desktop sidebar; on mobile the HUD is dropped entirely and the gesture
   // guide moves inline near the capture controls (rendered by StudioView).
@@ -125,15 +124,6 @@ export function App() {
             <span className="ml-1.5 hidden sm:inline">
               {soundEnabled ? 'Âm thanh' : 'Tắt tiếng'}
             </span>
-          </button>
-          <button
-            type="button"
-            onClick={startTour}
-            className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-sm text-white/75 transition hover:bg-white/10 sm:px-3"
-            title="Xem tour hướng dẫn"
-            data-testid="tour-btn"
-          >
-            ✨<span className="ml-1.5 hidden sm:inline">Tour</span>
           </button>
           <button
             type="button"
