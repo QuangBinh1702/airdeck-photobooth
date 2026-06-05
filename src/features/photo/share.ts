@@ -15,6 +15,18 @@ export interface SaveImageOptions {
 
 export type ShareBlobResult = 'shared' | 'unsupported' | 'cancelled' | 'failed';
 
+const MOBILE_USER_AGENT_RE = /Android|iPhone|iPad|iPod|Mobile/i;
+
+function shouldUseNativeShare(): boolean {
+  const nav = navigator;
+  const hasCoarsePointer =
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(pointer: coarse)').matches;
+  const hasMobileUserAgent = MOBILE_USER_AGENT_RE.test(nav.userAgent);
+
+  return hasCoarsePointer || hasMobileUserAgent;
+}
+
 /** Convert a data URL (e.g. from canvas.toDataURL) into a Blob. */
 export function dataUrlToBlob(dataUrl: string): Blob {
   const match = /^data:(.+?);base64,(.*)$/.exec(dataUrl);
@@ -111,6 +123,11 @@ export async function saveBlob(
   filename: string,
   title = 'AirDeck photo',
 ): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
+  if (!shouldUseNativeShare()) {
+    downloadBlob(blob, filename);
+    return 'downloaded';
+  }
+
   const result = await shareBlob(blob, filename, title);
   if (result === 'shared' || result === 'cancelled' || result === 'failed') {
     return result;
